@@ -72,6 +72,157 @@ interface PortfolioRow {
   lots: string;
   sum: string;
 }
+const PortfolioPieChart = ({ rows, currentLanguage, t }: { 
+  rows: PortfolioRow[], 
+  currentLanguage: string, 
+  t: (key: string) => string 
+}) => {
+  const [activeIndex, setActiveIndex] = React.useState<number | undefined>(undefined);
+
+  const chartData = React.useMemo(() => {
+    // Get valid rows with weights, sorted by weight (descending)
+    const validRows = rows
+      .filter(row => row.stock.trim() !== "" && row.weight && parseFloat(row.weight) > 0)
+      .sort((a, b) => parseFloat(b.weight) - parseFloat(a.weight));
+
+    if (validRows.length === 0) {
+      return [];
+    }
+
+    // Take top 8 stocks, group the rest as "Other"
+    const topStocks = validRows.slice(0, 8);
+    const otherStocks = validRows.slice(8);
+    
+    const otherWeight = otherStocks.reduce((sum, row) => sum + parseFloat(row.weight), 0);
+
+    const blueShades = [
+      "hsl(210, 90%, 20%)",
+      "hsl(210, 85%, 30%)",
+      "hsl(210, 80%, 40%)",
+      "hsl(210, 75%, 50%)",
+      "hsl(210, 70%, 60%)",
+      "hsl(210, 65%, 70%)",
+      "hsl(210, 60%, 80%)",
+      "hsl(210, 55%, 85%)",
+      "hsl(210, 50%, 90%)",
+    ];
+
+    const chartItems = topStocks.map((row, index) => ({
+      name: row.stock,
+      value: parseFloat(row.weight),
+      fill: blueShades[index],
+    }));
+
+    // Add "Other" category if there are remaining stocks
+    if (otherWeight > 0) {
+      chartItems.push({
+        name: t("common.other"),
+        value: otherWeight,
+        fill: blueShades[8],
+      });
+    }
+
+    return chartItems;
+  }, [rows, t]);
+
+  // Calculate total for percentage calculations
+  const totalWeight = React.useMemo(() => {
+    return chartData.reduce((sum, item) => sum + item.value, 0);
+  }, [chartData]);
+
+  // Generate chart config with percentages in labels
+  const chartConfig = React.useMemo(() => {
+    const config: ChartConfig = {
+      value: {
+        label: "Weight",
+      },
+    };
+
+    chartData.forEach((item) => {
+      config[item.name] = {
+        label: item.name,
+        color: item.fill,
+      };
+    });
+
+    return config;
+  }, [chartData]);
+
+  const onPieEnter = (_: any, index: number) => {
+    setActiveIndex(index);
+  };
+
+  const onPieLeave = () => {
+    setActiveIndex(undefined);
+  };
+
+  if (chartData.length === 0) {
+    return (
+      <Card className="flex flex-col">
+        <CardHeader className="items-center pb-0">
+          <CardDescription className="text-sm">{t("portfolioAllocation.portfolioDistributionByWeight")}</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  const totalStocks = rows.filter(row => row.stock.trim() !== "").length;
+
+  return (
+    <Card className="flex flex-col">
+      <CardHeader className="items-center pb-0">
+        <CardDescription className="text-sm">{t("portfolioAllocation.portfolioDistributionByWeight")}, %</CardDescription>
+      </CardHeader>
+      <CardContent className="flex-1 pb-0">
+        <ChartContainer
+          config={chartConfig}
+          className="mx-auto aspect-square max-h-[350px]"
+        >
+          <PieChart>
+            <ChartTooltip
+              cursor={false}
+              content={
+                <ChartTooltipContent 
+                  hideLabel 
+                  formatAsPercentage
+                  totalValue={totalWeight}
+                  decimalScale={1}
+                  language={currentLanguage}
+                />
+              }
+            />
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="name"
+              innerRadius={35}
+              strokeWidth={5}
+              activeIndex={activeIndex}
+              onMouseEnter={onPieEnter}
+              onMouseLeave={onPieLeave}
+              activeShape={({
+                outerRadius = 0,
+                ...props
+              }: PieSectorDataItem) => (
+                <Sector {...props} outerRadius={outerRadius + 5} />
+              )}
+            />
+            <ChartLegend
+              content={<ChartLegendContent nameKey="name" />}
+              className="-translate-y-2 flex-wrap gap-2 *:basis-1/4 *:justify-center *:text-xs"
+            />
+          </PieChart>
+        </ChartContainer>
+      </CardContent>
+      <CardFooter className="flex-col gap-2 text-sm">
+        <div className="flex items-center gap-2 leading-none font-medium">
+          <TrendingUp className="h-4 w-4" />
+          {t("portfolioAllocation.totalStocks")}: {totalStocks}
+        </div>
+      </CardFooter>
+    </Card>
+  );
+};
 
 export function PortfolioAllocationPage({ onNavigate }: HomePageProps) {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -240,163 +391,6 @@ export function PortfolioAllocationPage({ onNavigate }: HomePageProps) {
         }
         return row;
       }),
-    );
-  };
-
-const PortfolioPieChart = () => {
-    const [activeIndex, setActiveIndex] = React.useState<number | undefined>(undefined);
-
-    const chartData = React.useMemo(() => {
-      // Get valid rows with weights, sorted by weight (descending)
-      const validRows = rows
-        .filter(row => row.stock.trim() !== "" && row.weight && parseFloat(row.weight) > 0)
-        .sort((a, b) => parseFloat(b.weight) - parseFloat(a.weight));
-
-      if (validRows.length === 0) {
-        return [];
-      }
-
-      // Take top 8 stocks, group the rest as "Other"
-      const topStocks = validRows.slice(0, 8);
-      const otherStocks = validRows.slice(8);
-      
-      const otherWeight = otherStocks.reduce((sum, row) => sum + parseFloat(row.weight), 0);
-
-      const blueShades = [
-        "hsl(210, 90%, 20%)",  // Very dark blue
-        "hsl(210, 85%, 30%)",  // Dark blue
-        "hsl(210, 80%, 40%)",  // Medium dark blue
-        "hsl(210, 75%, 50%)",  // Blue
-        "hsl(210, 70%, 60%)",  // Medium blue
-        "hsl(210, 65%, 70%)",  // Light blue
-        "hsl(210, 60%, 80%)",  // Very light blue
-        "hsl(210, 55%, 85%)",  // Pale blue
-        "hsl(210, 50%, 90%)",  // Very pale blue for "Other"
-      ];
-
-      const chartItems = topStocks.map((row, index) => ({
-        name: row.stock,
-        value: parseFloat(row.weight),
-        fill: blueShades[index],
-      }));
-
-      // Add "Other" category if there are remaining stocks
-      if (otherWeight > 0) {
-        chartItems.push({
-          name: t("common.other"),
-          value: otherWeight,
-          fill: blueShades[8],
-        });
-      }
-
-      return chartItems;
-    }, [rows]);
-
-    // Calculate total for percentage calculations
-    const totalWeight = React.useMemo(() => {
-      return chartData.reduce((sum, item) => sum + item.value, 0);
-    }, [chartData]);
-
-    // Format number like CurrencyInput
-    const formatNumber = (value: number, decimalScale: number = 1) => {
-      const fixedValue = value.toFixed(decimalScale);
-      if (currentLanguage === 'ru') {
-        return fixedValue.replace('.', ',');
-      }
-      return fixedValue;
-    };
-
-    // Generate chart config with percentages in labels
-    const chartConfig = React.useMemo(() => {
-      const config: ChartConfig = {
-        value: {
-          label: "Weight",
-        },
-      };
-
-      chartData.forEach((item) => {
-        config[item.name] = {
-          label: item.name,
-          color: item.fill,
-        };
-      });
-
-      return config;
-    }, [chartData]);
-
-    const onPieEnter = (_: any, index: number) => {
-      setActiveIndex(index);
-    };
-
-    const onPieLeave = () => {
-      setActiveIndex(undefined);
-    };
-
-    if (chartData.length === 0) {
-      return (
-        <Card className="flex flex-col">
-          <CardHeader className="items-center pb-0">
-            <CardDescription>{t("portfolioAllocation.portfolioDistributionByWeight")}</CardDescription>
-          </CardHeader>
-        </Card>
-      );
-    }
-
-    const totalStocks = rows.filter(row => row.stock.trim() !== "").length;
-
-    return (
-      <Card className="flex flex-col">
-        <CardHeader className="items-center pb-0">
-          <CardDescription>{t("portfolioAllocation.portfolioDistributionByWeight")}, %</CardDescription>
-        </CardHeader>
-        <CardContent className="flex-1 pb-0">
-          <ChartContainer
-            config={chartConfig}
-            className="mx-auto aspect-square max-h-[350px]"
-          >
-            <PieChart>
-              <ChartTooltip
-                cursor={false}
-                content={
-                  <ChartTooltipContent 
-                    hideLabel 
-                    formatAsPercentage
-                    totalValue={totalWeight}
-                    decimalScale={1}
-                    language={currentLanguage}
-                  />
-                }
-              />
-              <Pie
-                data={chartData}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={35}
-                strokeWidth={5}
-                activeIndex={activeIndex}
-                onMouseEnter={onPieEnter}
-                onMouseLeave={onPieLeave}
-                activeShape={({
-                  outerRadius = 0,
-                  ...props
-                }: PieSectorDataItem) => (
-                  <Sector {...props} outerRadius={outerRadius + 5} />
-                )}
-              />
-              <ChartLegend
-                content={<ChartLegendContent nameKey="name" />}
-                className="-translate-y-2 flex-wrap gap-2 *:basis-1/4 *:justify-center *:text-xs" // Added *:text-xs here
-              />
-            </PieChart>
-          </ChartContainer>
-        </CardContent>
-        <CardFooter className="flex-col gap-2 text-sm">
-          <div className="flex items-center gap-2 leading-none font-medium">
-            <TrendingUp className="h-4 w-4" />
-            {t("portfolioAllocation.totalStocks")}: {totalStocks}
-          </div>
-        </CardFooter>
-      </Card>
     );
   };
 
@@ -734,14 +728,14 @@ const PortfolioPieChart = () => {
                 onValueChange={(value) => setInvestment(value || "")}
                 placeholder={t("common.enterAmount")}
                 className={
-                  "text-sm md:text-base flex p-2 h-10 md:h-10 w-full rounded-md border border-1S border-gray-300 mt-2 " +
+                  "text-base flex p-2 h-10 md:h-10 w-full rounded-md border border-1S border-gray-300 mt-2 " +
                   hideNumberArrows
                 }
               />
             </div>
             <Button
               onClick={calculateAllocation}
-              className="h-10 text-sm md:text-base md:h-11 px-3 md:px-8 border-2 border-gray-600  "
+              className="h-10 text-base md:h-11 px-3 md:px-8 border-2 border-gray-600"
             >
               {t("common.calculate")}
             </Button>
@@ -782,7 +776,7 @@ const PortfolioPieChart = () => {
                         readOnly={true}
                         decimalsLimit={0}
                         decimalScale={2}
-                        className="bg-white"
+                        className="bg-white text-base"
                       />
                     </TableCell>
                   </TableRow>
@@ -798,7 +792,7 @@ const PortfolioPieChart = () => {
                         readOnly={true}
                         decimalsLimit={0}
                         decimalScale={2}
-                        className="bg-white"
+                        className="bg-white text-base"
                       />
                     </TableCell>
                   </TableRow>
@@ -814,21 +808,25 @@ const PortfolioPieChart = () => {
                         readOnly={true}
                         decimalsLimit={0}
                         decimalScale={2}
-                        className="bg-white"
+                        className="bg-white text-base"
                       />
                     </TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
             </div>
-            <div className="bg-white md:rounded-lg pt-3 md:p-0 mt-3 mb-4 md:mb-6">
-              <PortfolioPieChart />
-            </div>
+           <div className="bg-white md:rounded-lg pt-3 md:p-0 mt-3 mb-4 md:mb-6">
+            <PortfolioPieChart 
+              rows={rows} 
+              currentLanguage={currentLanguage} 
+              t={t} 
+            />
+          </div>
           </div>
         )}
         <div className="bg-white md:rounded-lg md:border md:border-gray-200 p-3 md:p-6 mb-4 md:mb-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3 md:mb-4">
-            <h2 className="text-sm md:text-base font-semibold">
+            <h2 className="text-base md:text-base font-semibold">
               {t("portfolioAllocation.portfolioHeader")}
             </h2>
           </div>
@@ -840,7 +838,7 @@ const PortfolioPieChart = () => {
                     <Button
                       variant="ghost"
                       onClick={() => handleSort("stock")}
-                      className="p-0 hover:bg-transparent"
+                      className="p-0 hover:bg-transparent text-sm"
                     >
                       {t("portfolioAllocation.stockHeader")}
                       {getSortIndicator("stock")}
@@ -850,7 +848,7 @@ const PortfolioPieChart = () => {
                     <Button
                       variant="ghost"
                       onClick={() => handleSort("price")}
-                      className="p-0 hover:bg-transparent"
+                      className="p-0 hover:bg-transparent text-sm"
                     >
                       {t("portfolioAllocation.priceHeader")}
                       {getSortIndicator("price")}
@@ -860,7 +858,7 @@ const PortfolioPieChart = () => {
                     <Button
                       variant="ghost"
                       onClick={() => handleSort("weight")}
-                      className="p-0 hover:bg-transparent"
+                      className="p-0 hover:bg-transparent text-sm"
                     >
                       {t("portfolioAllocation.weightHeader")}
                       {getSortIndicator("weight")}
@@ -870,7 +868,7 @@ const PortfolioPieChart = () => {
                     <Button
                       variant="ghost"
                       onClick={() => handleSort("lotSize")}
-                      className="p-0 hover:bg-transparent"
+                      className="p-0 hover:bg-transparent text-sm"
                     >
                       {t("portfolioAllocation.lotSizeHeader")}
                       {getSortIndicator("lotSize")}
@@ -880,7 +878,7 @@ const PortfolioPieChart = () => {
                     <Button
                       variant="ghost"
                       onClick={() => handleSort("lots")}
-                      className="p-0 hover:bg-transparent text-right w-full justify-end"
+                      className="p-0 hover:bg-transparent text-right w-full justify-end text-sm"
                     >
                       {t("portfolioAllocation.lotsHeader")}
                       {getSortIndicator("lots")}
@@ -890,7 +888,7 @@ const PortfolioPieChart = () => {
                     <Button
                       variant="ghost"
                       onClick={() => handleSort("sum")}
-                      className="p-0 hover:bg-transparent text-right w-full justify-end"
+                      className="p-0 hover:bg-transparent text-right w-full justify-end text-sm"
                     >
                       {t("portfolioAllocation.sumHeader")}
                       {getSortIndicator("sum")}
@@ -911,7 +909,7 @@ const PortfolioPieChart = () => {
                               updateRow(row.id, "stock", e.target.value)
                             }
                             placeholder=""
-                            className="bg-white border-gray-200 h-8 md:h-10 text-sm md:text-sm px-1.5 md:px-3 shadow-none"
+                            className="bg-white border-gray-200 h-8 md:h-10 text-base md:text-sm px-1.5 md:px-3 shadow-none"
                           />
                           <Button
                             variant="outline"
@@ -931,7 +929,7 @@ const PortfolioPieChart = () => {
                           }
                           placeholder=""
                           className={
-                            "bg-white border rounded-md border-gray-200 w-full h-8 md:h-10 text-sm md:text-sm px-2 md:px-3" +
+                            "bg-white border rounded-md border-gray-200 w-full h-8 md:h-10 text-base md:text-sm px-2 md:px-3" +
                             hideNumberArrows
                           }
                         />
@@ -946,7 +944,7 @@ const PortfolioPieChart = () => {
                             }
                           }}
                           placeholder=""
-                          className="bg-white border rounded-md border-gray-200 w-full h-8 md:h-10 text-sm md:text-sm px-2 md:px-3"
+                          className="bg-white border rounded-md border-gray-200 w-full h-8 md:h-10 text-base md:text-sm px-2 md:px-3"
                         />
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
@@ -957,7 +955,7 @@ const PortfolioPieChart = () => {
                           readOnly={true}
                           decimalsLimit={0}
                           decimalScale={0}
-                          className="bg-white border rounded-md border-gray-200 w-full h-8 md:h-10 text-sm md:text-sm px-2 md:px-3"
+                          className="bg-white border rounded-md border-gray-200 w-full h-8 md:h-10 text-base md:text-sm px-2 md:px-3"
                         />
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-right">
@@ -968,7 +966,7 @@ const PortfolioPieChart = () => {
                           readOnly={true}
                           decimalsLimit={0}
                           decimalScale={0}
-                          className="bg-white text-sm md:text-sm border-0 text-right"
+                          className="bg-white text-base md:text-sm border-0 text-right"
                         />
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-right">
@@ -977,7 +975,7 @@ const PortfolioPieChart = () => {
                           onValueChange={() => {}}
                           placeholder=""
                           readOnly={true}
-                          className="bg-white border-0 text-sm md:text-sm text-right"
+                          className="bg-white border-0 text-base md:text-sm text-right"
                         />
                       </TableCell>
                       <TableCell className="px-0.5 md:px-4 py-1.5 md:py-4">
@@ -999,25 +997,25 @@ const PortfolioPieChart = () => {
                       className="md:hidden hover:bg-transparent border-t-0"
                     >
                       <TableCell colSpan={7} className="px-1 pt-1 pb-2">
-                        <div className="text-xs md:text-sm text-gray-500 space-y-0.5">
+                        <div className="text-sm text-gray-500 space-y-0.5">
                           <div className="flex items-center gap-2">
-                            <span>{t("portfolioAllocation.lotsHeader")}:</span>
+                            <span className="text-sm">{t("portfolioAllocation.lotsHeader")}:</span>
                             <CurrencyInput
                               value={row.lots}
                               onValueChange={() => {}}
                               readOnly={true}
                               decimalsLimit={0}
                               decimalScale={0}
-                              className="text-gray-700 bg-transparent border-0 p-0 text-xs md:text-sm h-auto"
+                              className="text-gray-700 bg-transparent border-0 p-0 text-sm h-auto"
                             />
                           </div>
                           <div className="flex items-center gap-2">
-                            <span>{t("portfolioAllocation.sumHeader")}:</span>
+                            <span className="text-sm">{t("portfolioAllocation.sumHeader")}:</span>
                             <CurrencyInput
                               value={row.sum}
                               onValueChange={() => {}}
                               readOnly={true}
-                              className="text-gray-700 bg-transparent border-0 text-xs md:text-sm h-auto"
+                              className="text-gray-700 bg-transparent border-0 text-sm h-auto"
                             />
                           </div>
                         </div>
@@ -1044,7 +1042,7 @@ const PortfolioPieChart = () => {
                         placeholder=""
                         suffix="%"
                         readOnly={true}
-                        className="bg-transparent border-0 text-sm md:text-sm font-semibold"
+                        className="bg-transparent border-0 text-base md:text-sm font-semibold"
                       />
                     </div>
                   </TableCell>
@@ -1060,7 +1058,7 @@ const PortfolioPieChart = () => {
                       onValueChange={() => {}}
                       placeholder=""
                       readOnly={true}
-                      className="bg-transparent border-0 text-sm md:text-sm text-right font-semibold"
+                      className="bg-transparent border-0 text-base md:text-sm text-right font-semibold"
                     />
                   </TableCell>
                   <TableCell className="px-0.5 md:px-4 py-2 md:py-4 hidden md:table-cell">
@@ -1069,28 +1067,28 @@ const PortfolioPieChart = () => {
 
                   {/* Mobile view */}
                   <TableCell className="px-0 py-2 md:hidden" colSpan={7}>
-                    <div className="text-xs md:text-sm text-gray-700 font-semibold space-y-1 pl-2">
+                    <div className="text-sm text-gray-700 font-semibold space-y-1 pl-2">
                       <div className="items-center gap-">
-                        <span className="min-w-[80px]">
+                        <span className="min-w-[80px] text-sm">
                           {t("portfolioAllocation.totalStocks")}:
                         </span>
-                        <span className="pl-2">{portfolioTotals.stocks}</span>
+                        <span className="pl-2 text-sm">{portfolioTotals.stocks}</span>
                       </div>
-                      <div className="items-center gap-1">
-                        <span className="min-w-[80px]">
+                      <div className="items-center gap-1 ">
+                        <span className="min-w-[80px] text-sm">
                           {t("portfolioAllocation.totalWeight")}:
                         </span>
-                        <span className="pl-2">{portfolioTotals.weight}%</span>
+                        <span className="pl-2 text-sm">{portfolioTotals.weight}%</span>
                       </div>
                       <div className="items-center gap-2">
-                        <span className="min-w-[80px]">
+                        <span className="min-w-[80px] text-sm">
                           {t("portfolioAllocation.totalSum")}:
                         </span>
                         <CurrencyInput
                           value={portfolioTotals.sum.toString()}
                           onValueChange={() => {}}
                           readOnly={true}
-                          className="text-xs md:text-sm  pl-2 bg-transparent border-0 font-semibold "
+                          className="text-sm pl-2 bg-transparent border-0 font-semibold"
                         />
                       </div>
                     </div>
@@ -1105,7 +1103,7 @@ const PortfolioPieChart = () => {
                 onClick={addRow}
                 variant="outline"
                 size="sm"
-                className="h-9"
+                className="h-9 text-sm"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 {t("portfolioAllocation.addRow")}
@@ -1115,17 +1113,17 @@ const PortfolioPieChart = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-gray-600 h-9"
+                    className="text-gray-600 h-9 text-sm"
                   >
                     {t("portfolioAllocation.additionalCommands")}
                     <ChevronDown className="h-4 w-4 ml-1" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={distributeEvenly}>
+                  <DropdownMenuItem className="text-sm" onClick={distributeEvenly}>
                     {t("portfolioAllocation.distributeWeightsEvenly")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={copyIndexIMOEX}>
+                  <DropdownMenuItem className="text-sm" onClick={copyIndexIMOEX}>
                     {t("portfolioAllocation.copyIndexIMOEX")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>

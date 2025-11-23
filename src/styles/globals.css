@@ -111,41 +111,6 @@
   border-color: hsl(0, 0%, 40%) !important;
 } */
 
-/* Remove any previous zoom fixes and add this instead */
-
-/* Reset body to prevent permanent zoom */
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  position: relative;
-  overflow-x: hidden;
-}
-
-/* Fix for mobile viewport */
-@viewport {
-  width: device-width;
-  zoom: 1.0;
-  min-zoom: 1.0;
-  max-zoom: 1.0;
-  user-zoom: fixed;
-}
-
-/* Prevent zoom but allow normal scrolling */
-@media screen and (max-width: 768px) {
-  html {
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-  }
-  
-  body {
-    touch-action: pan-y;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  /* Ensure inputs don't cause zoom but keep normal behavior */
-  input, textarea, select {
-    font-size: 16px;
-    max-width: 100%;
-  }
+html {
+  font-size: 16px; 
 }
