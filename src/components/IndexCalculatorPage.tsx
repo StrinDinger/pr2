@@ -44,12 +44,13 @@ export function IndexCalculatorPage({ onNavigate }: IndexCalculatorPageProps) {
   const [additionalInvestmentGrowthRate, setAdditionalInvestmentGrowthRate] = useState("");
   const [additionalInvestments, setAdditionalInvestments] = useState<{ amount: string }[]>([]);
 
+  const [additionalInvestmentGrows, setAdditionalInvestmentGrows] = useState(false);
   // Initialize investments when duration changes
-  useEffect(() => {
+   useEffect(() => {
     if (isManualMode) return;
     
     calculateInvestmentsWithIndexation();
-  }, [duration, additionalInvestment, additionalInvestmentGrowthRate, isManualMode, durationUnit, additionalInvestmentFrequency]);
+  }, [duration, additionalInvestment, additionalInvestmentGrowthRate, isManualMode, durationUnit, additionalInvestmentFrequency, additionalInvestmentGrows]);
 
   const handleManualAmountChange = (index: number, value: string) => {
     const newInvestments = [...additionalInvestments];
@@ -57,7 +58,7 @@ export function IndexCalculatorPage({ onNavigate }: IndexCalculatorPageProps) {
     setAdditionalInvestments(newInvestments);
   };
 
-  const calculateInvestmentsWithIndexation = () => {
+   const calculateInvestmentsWithIndexation = () => {
     if (parseInt(duration) <= 0 || isManualMode) return;
     
     const growthRate = parseFloat(additionalInvestmentGrowthRate) / 100 || 0;
@@ -69,30 +70,34 @@ export function IndexCalculatorPage({ onNavigate }: IndexCalculatorPageProps) {
     let tableRows = 0;
     
     if (additionalInvestmentFrequency === 'each year') {
-      // For yearly investments
       tableRows = durationUnit === 'years' ? periods : Math.ceil(periods / 12);
     } else {
-      // For monthly investments
       tableRows = durationUnit === 'years' ? periods * 12 : periods;
     }
     
     const calculatedInvestments = Array.from({ length: tableRows }, (_, index) => {
-      if (additionalInvestmentFrequency === 'each year') {
-        // Yearly growth - apply indexation annually
-        const yearMultiplier = Math.pow(1 + growthRate, index);
-        const amount = (baseAmount * yearMultiplier).toFixed(2);
-        return { amount };
+      // Only apply growth if the toggle is enabled
+      if (additionalInvestmentGrows) {
+        if (additionalInvestmentFrequency === 'each year') {
+          // Yearly growth - apply indexation annually
+          const yearMultiplier = Math.pow(1 + growthRate, index);
+          const amount = (baseAmount * yearMultiplier).toFixed(2);
+          return { amount };
+        } else {
+          // Monthly investments - apply indexation only at year boundaries
+          const yearIndex = Math.floor(index / 12);
+          const yearMultiplier = Math.pow(1 + growthRate, yearIndex);
+          const amount = (baseAmount * yearMultiplier).toFixed(2);
+          return { amount };
+        }
       } else {
-        // Monthly investments - apply indexation only at year boundaries
-        const yearIndex = Math.floor(index / 12);
-        const yearMultiplier = Math.pow(1 + growthRate, yearIndex);
-        const amount = (baseAmount * yearMultiplier).toFixed(2);
-        return { amount };
+        // If growth is disabled, return the base amount for all periods
+        return { amount: baseAmount.toFixed(2) };
       }
     });
   
-  setAdditionalInvestments(calculatedInvestments);
-};
+    setAdditionalInvestments(calculatedInvestments);
+  };
 
   const deleteManualInvestment = (index: number) => {
     const newInvestments = additionalInvestments.filter((_, i) => i !== index);
@@ -105,8 +110,18 @@ export function IndexCalculatorPage({ onNavigate }: IndexCalculatorPageProps) {
   
   const getMonthName = (monthIndex: number) => {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      t("months.january"),
+      t("months.february"),
+      t("months.march"),
+      t("months.april"),
+      t("months.may"),
+      t("months.june"),
+      t("months.july"),
+      t("months.august"),
+      t("months.september"),
+      t("months.october"),
+      t("months.november"),
+      t("months.december")
     ];
     return months[monthIndex % 12];
   };
@@ -236,7 +251,7 @@ const calculateInvestment = () => {
         <div className="max-w-xl mx-auto bg-white rounded-lg border border-gray-200 p-6">
           {/* Initial Investment Section */}
           <div className="mb-3">
-            <Label htmlFor="initial-investment" className="text-sm md:text-sm font-medium text-gray-500 mb-2 block">
+            <Label htmlFor="initial-investment" className="text-sm md:text-base font-medium text-gray-500 mb-2 block">
               {t("indexCalculatorPage.initialInvestment")}
             </Label>
             <div className="flex gap-2">
@@ -245,9 +260,9 @@ const calculateInvestment = () => {
                 onValueChange={(value) => setInitialInvestment(value || '')}
                 placeholder=""
                 prefix=""
-                className="max-w-[185px] text-sm md:text-sm flex p-2 h-10 md:h-10 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400" 
+                className="max-w-[185px] text-base flex p-2 h-10 md:h-10 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400" 
               />
-              <select className="w-24 px-3 border border-gray-300 rounded-md text-sm md:text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400">
+              <select className="w-24 px-3 border border-gray-300 rounded-md text-base focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400">
                 <option>RUB</option>
                 <option>USD</option>
                 <option>EUR</option>
@@ -258,7 +273,7 @@ const calculateInvestment = () => {
 
           {/* Duration Section */}
           <div className="mb-3">
-            <Label htmlFor="duration" className="text-sm font-medium text-gray-500 mb-2 block ">
+            <Label htmlFor="duration" className="text-sm md:text-base font-medium text-gray-500 mb-2 block">
               {t("indexCalculatorPage.duration")}
             </Label>
             <div className="flex gap-2">
@@ -272,14 +287,14 @@ const calculateInvestment = () => {
                   }
                 }}
                 placeholder=""
-                className="text-sm md:text-sm flex p-2 h-10 md:h-10 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 max-w-[80px]"
+                className="text-base flex p-2 h-10 md:h-10 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 max-w-[80px]"
                 step="1"
                 min="0"
               />
               <select 
                 value={durationUnit}
                 onChange={(e) => setDurationUnit(e.target.value as "years" | "months")}
-                className="w-28 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"              >
+                className="w-28 px-3 py-2 border border-gray-300 rounded-md text-base focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400">
                 <option value="years">{t("indexCalculatorPage.years")}</option>
                 <option value="months">{t("indexCalculatorPage.months")}</option>
               </select>
@@ -288,7 +303,7 @@ const calculateInvestment = () => {
 
           {/* Interest Rate Section */}
           <div className="mb-6">
-            <Label htmlFor="interest-rate" className="text-sm font-medium text-gray-500 mb-2 block">
+            <Label htmlFor="interest-rate" className="text-sm md:text-base font-medium text-gray-500 mb-2 block">
               {t("indexCalculatorPage.interestRate")}
             </Label>
             <div className="flex gap-2">
@@ -297,11 +312,10 @@ const calculateInvestment = () => {
                 onValueChange={(value) => setInterestRate(value || '')}
                 placeholder=""
                 prefix=""
-                className={"text-sm md:text-sm flex p-2 h-10 md:h-10 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 max-w-[80px] " 
+                className={"text-base flex p-2 h-10 md:h-10 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 max-w-[80px] " 
                     + hideNumberArrows}
               />
-              <div 
-                className="w-32 px-0 py-2 border-0 rounded-md text-sm bg-white text-gray-500">
+              <div className="w-32 px-0 py-2 border-0 rounded-md text-base bg-white text-gray-500">
                 {t("indexCalculatorPage.perYear")}
               </div>
             </div>
@@ -314,15 +328,14 @@ const calculateInvestment = () => {
                 <Checkbox 
                 id="reinvest"
                 onCheckedChange={(checked) => setReinvest(checked as boolean)} />
-                <Label className="text-gray-500" htmlFor="terms">{t("indexCalculatorPage.reinvest")}</Label>
+                <Label className="text-sm md:text-base text-gray-500" htmlFor="terms">{t("indexCalculatorPage.reinvest")}</Label>
               </div>
             </div>
-
           </div>
 
           {/* Additional Investment Section */}
           <div className="mb-8">
-            <Label htmlFor="additional-investment" className="text-sm font-medium text-gray-500 mb-2 block">
+            <Label htmlFor="additional-investment" className="text-sm md:text-base font-medium text-gray-500 mb-2 block">
               {t("indexCalculatorPage.additionalInvestment")}
             </Label>
             
@@ -333,7 +346,7 @@ const calculateInvestment = () => {
                 placeholder=""
                 prefix=""
                 readOnly={isManualMode}
-                className={`max-w-[185px] text-sm  flex p-2 h-10 md:h-10 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 ${
+                className={`max-w-[185px] text-base flex p-2 h-10 md:h-10 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 ${
                   isManualMode ? 'bg-gray-100 cursor-not-allowed' : ''
                 }`}
               />
@@ -341,7 +354,7 @@ const calculateInvestment = () => {
                 value={additionalInvestmentFrequency}
                 onChange={(e) => setAdditionalInvestmentFrequency(e.target.value as "each year" | "each month")}
                 disabled={isManualMode}
-                className={`w-32 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 ${
+                className={`w-34 px-3 py-2 border border-gray-300 rounded-md text-base focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 ${
                   isManualMode ? 'bg-gray-100 cursor-not-allowed' : ''
                 }`}
               >
@@ -352,27 +365,39 @@ const calculateInvestment = () => {
 
             {/* Indexation/Growth Rate - Label above input */}
             <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <Label className="text-sm font-medium text-gray-500">
-                  {t("indexCalculatorPage.additionalInvestmentGrowthRate")}
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="additional-investment-grows"
+                  checked={additionalInvestmentGrows}
+                  onCheckedChange={(checked) => setAdditionalInvestmentGrows(checked as boolean)}
+                />
+                <Label className="text-sm md:text-base text-gray-500" htmlFor="additional-investment-grows">
+                  {t("indexCalculatorPage.additionalInvestmentGrows")}
                 </Label>
               </div>
-              <div className="flex items-center gap-2">
-                <CurrencyInput
-                  value={additionalInvestmentGrowthRate}
-                  onValueChange={(value) => setAdditionalInvestmentGrowthRate(value || '')}
-                  placeholder=""
-                  prefix=""
-                  readOnly={isManualMode}
-                  className={`text-sm md:text-sm flex p-2 h-10 md:h-10 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 max-w-[80px] ${
-                    isManualMode ? 'bg-gray-50 cursor-not-allowed' : ''
-                  }`}
-                />
-                <div className="text-sm text-gray-500">
-                  {t("indexCalculatorPage.perYear")}
+            </div>
+
+            {/* Indexation/Growth Rate - Only show if toggle is enabled */}
+            {additionalInvestmentGrows && (
+              <div className="mb-4">
+
+                <div className="flex items-center gap-2">
+                  <CurrencyInput
+                    value={additionalInvestmentGrowthRate}
+                    onValueChange={(value) => setAdditionalInvestmentGrowthRate(value || '')}
+                    placeholder=""
+                    prefix=""
+                    readOnly={isManualMode}
+                    className={`text-base flex p-2 h-10 md:h-10 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 max-w-[80px] ${
+                      isManualMode ? 'bg-gray-50 cursor-not-allowed' : ''
+                    }`}
+                  />
+                  <div className="text-base text-gray-500">
+                    {t("indexCalculatorPage.perYear")}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
               <Button
               variant="ghost"
               size="sm"
@@ -451,7 +476,7 @@ const calculateInvestment = () => {
                                               placeholder=""
                                               prefix=""
                                               readOnly={!isManualMode}
-                                              className={`text-right w-full h-10 text-sm px-3 ${
+                                              className={`text-right w-full h-10 text-base px-3 ${
                                                 isManualMode 
                                                   ? 'border border-gray-200 rounded-md bg-white' 
                                                   : 'bg-transparent border-0 cursor-default'
@@ -509,7 +534,7 @@ const calculateInvestment = () => {
                                               placeholder=""
                                               prefix=""
                                               readOnly={!isManualMode}
-                                              className={`text-right w-full h-8 text-sm px-1.5 ${
+                                              className={`text-right w-full h-8 text-base px-1.5 ${
                                                 isManualMode 
                                                   ? 'border border-gray-200 rounded-md bg-white' 
                                                   : 'bg-transparent border-0'
@@ -571,7 +596,7 @@ const calculateInvestment = () => {
                                     placeholder=""
                                     prefix=""
                                     readOnly={!isManualMode}
-                                    className={`text-right w-full h-10 text-sm px-3 ${
+                                    className={`text-right w-full h-10 text-base px-3 ${
                                       isManualMode 
                                         ? 'border border-gray-200 rounded-md bg-white' 
                                         : 'bg-transparent border-0 cursor-default'
@@ -622,7 +647,7 @@ const calculateInvestment = () => {
                                       placeholder=""
                                       prefix=""
                                       readOnly={!isManualMode}
-                                      className={`text-right w-full h-8 text-sm px-1.5 ${
+                                      className={`text-right w-full h-8 text-base px-1.5 ${
                                         isManualMode 
                                           ? 'border border-gray-200 rounded-md bg-white' 
                                           : 'bg-transparent border-0'
@@ -656,7 +681,7 @@ const calculateInvestment = () => {
                         variant="outline"
                         size="sm"
                         onClick={addManualInvestment}
-                        className="w-full"
+                        className="w-full text-sm"
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         {additionalInvestmentFrequency === 'each month' 
@@ -672,7 +697,7 @@ const calculateInvestment = () => {
           </div>
           {/* Calculate Button */}
           <Button 
-            className="w-full bg-gray-900 hover:bg-gray-800 text-white py-3"
+            className="w-full bg-gray-900 hover:bg-gray-800 text-white py-3 text-base"
             onClick={handleCalculate}
           >
             {t("common.calculate")}
@@ -682,15 +707,14 @@ const calculateInvestment = () => {
               <h3 className="text-lg font-semibold mb-3">{t("indexCalculatorPage.results")}</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{t("indexCalculatorPage.finalBalance")}:</span>
-                  <span className="font-semibold">
+                  <span className="text-sm md:text-base text-gray-600">{t("indexCalculatorPage.finalBalance")}: </span>
+                  <span className="font-semibold text-base">
                     {calculationResult.finalBalance.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2
-                    })} RUB
+                    })}
                   </span>
                 </div>
-
               </div>
             </div>
           )}

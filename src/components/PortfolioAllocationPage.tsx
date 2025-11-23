@@ -1088,7 +1088,7 @@ export function PortfolioAllocationPage({ onNavigate }: HomePageProps) {
                           value={portfolioTotals.sum.toString()}
                           onValueChange={() => {}}
                           readOnly={true}
-                          className="text-sm pl-2 bg-transparent border-0 font-semibold"
+                          className="text-sm pl-2 bg-transparent border-0 font-semibold text-gray-700 "
                         />
                       </div>
                     </div>
@@ -1119,7 +1119,9 @@ export function PortfolioAllocationPage({ onNavigate }: HomePageProps) {
                     <ChevronDown className="h-4 w-4 ml-1" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" 
+                 className="min-w-[200px] bg-white">
+                  
                   <DropdownMenuItem className="text-sm" onClick={distributeEvenly}>
                     {t("portfolioAllocation.distributeWeightsEvenly")}
                   </DropdownMenuItem>

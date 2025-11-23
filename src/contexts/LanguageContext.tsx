@@ -93,13 +93,14 @@ const translations = {
       yearHeader:"Год",
       monthHeader: "Месяц",
       amountHeader: "Вложение",
-      setManually: "Указать произвольные значения",
+      setManually: "Заполнить вложения вручную",
       manualMode: "Произвольный режим",
       addYear: "Добавить",
       actionsHeader: "",
       results: "Результаты",
       finalBalance: "Итоговая сумма",
-      breakdown: "Изменение за период"
+      breakdown: "Изменение за период",
+      additionalInvestmentGrows: "Увеличивать вложения"
     },
     validation: {
       incompleteFields: "Значения (акция, цена и вес) должны быть заполнены во всех строках. Цена и вес должны быть положительными.",
@@ -204,7 +205,8 @@ const translations = {
       manualMode: "Manual mode",
       results:"Results",
       breakdown: "Breakdown",
-      finalBalance: "Total amount"
+      finalBalance: "Total amount",
+      additionalInvestmentGrows: "Increase investments"
     },
   }
 };

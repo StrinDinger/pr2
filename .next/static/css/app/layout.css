@@ -1109,6 +1109,9 @@ video {
 .min-w-\[var\(--radix-select-trigger-width\)\] {
   min-width: var(--radix-select-trigger-width);
 }
+.min-w-\[200px\] {
+  min-width: 200px;
+}
 .max-w-4xl {
   max-width: 56rem;
 }
