@@ -2032,14 +2032,20 @@ video {
   --input: 0 0% 26.9%;
   --ring: 0 0% 60%;
 }
-.react-currency-input-field:focus {
+/* .react-currency-input-field:focus {
   outline: none !important;
   box-shadow: 0 0 0 4px hsl(0, 0%, 40%) !important;
   border-color: hsl(0, 0%, 40%) !important;
-}
+} */
 
 html {
   font-size: 16px; 
+  touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+}
+
+input, textarea, select {
+  touch-action: manipulation;
 }
 
 .\*\:basis-1\/4 > * {
@@ -3624,4 +3630,3 @@ a.\[a\&\]\:hover\:bg-secondary\/90:hover {
 a.\[a\&\]\:hover\:text-accent-foreground:hover {
   color: hsl(var(--accent-foreground));
 }
-

@@ -105,12 +105,18 @@
     }
   }
 }
-.react-currency-input-field:focus {
+/* .react-currency-input-field:focus {
   outline: none !important;
   box-shadow: 0 0 0 4px hsl(0, 0%, 40%) !important;
   border-color: hsl(0, 0%, 40%) !important;
-}
+} */
 
 html {
   font-size: 16px; 
+  touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+}
+
+input, textarea, select {
+  touch-action: manipulation;
 }

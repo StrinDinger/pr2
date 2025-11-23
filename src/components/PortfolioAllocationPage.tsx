@@ -1090,7 +1090,7 @@ const PortfolioPieChart = () => {
                           value={portfolioTotals.sum.toString()}
                           onValueChange={() => {}}
                           readOnly={true}
-                          className="text-xs md:text-sm  pl-2 text-gray-700 bg-transparent border-0 font-semibold "
+                          className="text-xs md:text-sm  pl-2 bg-transparent border-0 "
                         />
                       </div>
                     </div>
