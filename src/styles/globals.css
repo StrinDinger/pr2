@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-size: 16px;
+  --background: 0 0% 100%;
+  --foreground: 0 0% 14.5%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 14.5%;
+  --primary: 240 100% 4%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 33% 95%;
+  --secondary-foreground: 240 100% 4%;
+  --muted: 240 20% 94%;
+  --muted-foreground: 240 8% 44%;
+  --accent: 240 20% 93%;
+  --accent-foreground: 240 100% 4%;
+  --destructive: 350 82% 46%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 90%;
+  --input: 0 0% 100%;
+  --ring: 0 0% 40%;
+  --radius: 0.625rem;
+}
+
+.dark {
+  --background: 0 0% 14.5%;
+  --foreground: 0 0% 98.5%;
+  --card: 0 0% 14.5%;
+  --card-foreground: 0 0% 98.5%;
+  --primary: 0 0% 98.5%;
+  --primary-foreground: 0 0% 20.5%;
+  --secondary: 0 0% 26.9%;
+  --secondary-foreground: 0 0% 98.5%;
+  --muted: 0 0% 26.9%;
+  --muted-foreground: 0 0% 70.8%;
+  --accent: 0 0% 26.9%;
+  --accent-foreground: 0 0% 98.5%;
+  --destructive: 25 82% 46%;
+  --border: 0 0% 26.9%;
+  --input: 0 0% 26.9%;
+  --ring: 0 0% 60%;
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer base {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    h1 {
+      font-size: 1.5rem; /* text-2xl equivalent */
+      font-weight: 500; /* medium */
+      line-height: 1.5;
+    }
+
+    h2 {
+      font-size: 1.25rem; /* text-xl equivalent */
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    h3 {
+      font-size: 1.125rem; /* text-lg equivalent */
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-size: 1rem; /* text-base equivalent */
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    p {
+      font-size: 1rem;
+      font-weight: 400; /* normal */
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: 1rem;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    button {
+      font-size: 1rem;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    input {
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+  }
+}
+.react-currency-input-field:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 4px hsl(0, 0%, 40%) !important;
+  border-color: hsl(0, 0%, 40%) !important;
+}
+
+html {
+  font-size: 16px; 
+}
+
+
