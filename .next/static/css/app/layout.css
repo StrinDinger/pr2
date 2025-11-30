@@ -1100,6 +1100,9 @@ video {
 .min-w-\[12rem\] {
   min-width: 12rem;
 }
+.min-w-\[200px\] {
+  min-width: 200px;
+}
 .min-w-\[80px\] {
   min-width: 80px;
 }
@@ -1108,9 +1111,6 @@ video {
 }
 .min-w-\[var\(--radix-select-trigger-width\)\] {
   min-width: var(--radix-select-trigger-width);
-}
-.min-w-\[200px\] {
-  min-width: 200px;
 }
 .max-w-4xl {
   max-width: 56rem;
@@ -2056,11 +2056,6 @@ html {
 .\*\:text-xs > * {
   font-size: 0.75rem;
   line-height: 1rem;
-}
-
-.\*\:text-base > * {
-  font-size: 1rem;
-  line-height: 1.5rem;
 }
 
 .selection\:bg-primary *::-moz-selection {
